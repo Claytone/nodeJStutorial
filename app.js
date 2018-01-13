@@ -183,18 +183,68 @@ Bullet.update = function(){
     return pack; //send the package back to the main loop
 }
 var DEBUG = true;
+
+var USERS = {
+    //username:password
+    "bob":"asd",
+    "bob2":"asd",
+    "bob3":"asd",  
+}
+
+var isValidPassword = function(data, cb) {
+    setTimeout(function() {
+        cb(USERS[data.username] === data.password);
+    }, 10);
+}
+
+var isUsernameTaken= function(data, cb) {
+    setTimeout(function() {
+        cb(USERS[data.username]);
+    }, 10);
+}
+
+var addUser = function(data, cb) {
+    setTimeout(function() {
+        USERS[data.username] = data.password;
+        cb();
+    }, 10);
+}
+
 var io = require('socket.io')(serv,{});
 io.sockets.on('connection', function(socket) {
+    console.log('Socket connection');
     
     //prepare an ID for the socket
     socket.id = Math.random();
-    socket.x = 0;
-    socket.y = 0;
     SOCKET_LIST[socket.id] = socket;
     
-    //initialize a player connected to that socket
-    Player.onConnect(socket);
-    console.log('Socket connection');
+    socket.on('signIn', function(data) {
+        isValidPassword(data, function(res) {
+ 
+        if (res) {
+            //initialize a player connected to that socket
+            Player.onConnect(socket);
+            socket.emit('signInResponse', {success:true});
+        }
+        else {
+            socket.emit('signInResponse', {success:false});
+        }
+        });
+    });
+    
+    socket.on('signUp', function(data) {
+        isUsernameTaken(data, function(res) {
+            if (res) {
+                socket.emit('signUpResponse', {success:false});
+            }
+            else {
+                addUser(data, function() {
+                    socket.emit('signUpResponse', {success:true});
+                });
+            }
+        });
+    });
+    
 
     socket.on('disconnect', function() {
         delete SOCKET_LIST[socket.id];
