@@ -5,6 +5,7 @@
   "main": "app.js",
   "dependencies": {
     "express": "^4.16.2",
+    "mongojs": "^2.4.1",
     "socket.io": "^2.0.4"
   },
   "devDependencies": {},
